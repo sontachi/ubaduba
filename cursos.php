@@ -37,7 +37,7 @@ if($_SESSION['permissao'] > 0)
 		else{
 			$id = $_POST['oque'];
 			$db = conectaBD();
-			$query = "UPDATE cursos SET nome = '$nome', email = '$email', sexo = '$sexo', fk_curso = '$curso' WHERE pk_curso = '$id'";
+			$query = "UPDATE cursos SET nome = '$nome' WHERE pk_curso = '$id'";
 			$result = mysql_query($query);
 			desconectaBD($db);
 			if($result)$aviso_sucesso = "Curso atualizado com sucesso";

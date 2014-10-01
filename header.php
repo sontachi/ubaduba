@@ -14,25 +14,43 @@
      logout();
   }
 
+  if(isset($_GET['gerar_dados']))
+  {
+    $db = conectaBD();
+
+    for($i = 12; $i >=0; $i--)
+    {
+      $query = "INSERT INTO consultas_sensor_historico (pk_consulta, fk_sensor, valor_lido, data) VALUES (NULL, 2, (50+RAND()%50),DATE_SUB(NOW(), interval ".$i." HOUR))";
+      $result = mysql_query($query);
+    }
+    desconectaBD($db);
+  }
+
   ?>
 
   <!DOCTYPE html>
   <html lang="pt-BR">
   <head>
       <meta charset="utf-8">
-      <title>Sistema GIN</title>
+      <title>Fast Control</title>
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <meta name="description" content="">
       <meta name="author" content="">
 
       <!-- Styles -->
-      <link href="css/bootstrap.css" rel="stylesheet">
+      <link rel="stylesheet" type="text/css" href="css/bootstrap.css"/>
+      <link rel="stylesheet" type="text/css" href="css/bootstrap-datetimepicker.min.css"/>
+      <link href="./css/grafico.css" rel="stylesheet" type="text/css"/>
 
       <script src="js/jquery.js"></script>
       <script src="js/bootstrap.js"></script>
       <script src="js/bootstrap-inputmask.min.js"></script>
+      <script src="js/bootstrap-datepicker.js"></script>
       <!--<script src="js/jquery.maskedinput.js"></script>-->
       <script src="js/funcoes.js"></script>
+
+      <script language="javascript" type="text/javascript" src="js/jquery.flot.js"></script>
+      <script language="javascript" type="text/javascript" src="js/jquery.flot.time.js"></script>
   </head>
   
   <body>
@@ -47,14 +65,32 @@
           <div class="navbar-inner">
               <div class="container">
                   <ul class="nav">
+                    <?php
+                      //Apenas admin
+                      if($_SESSION['permissao'] == 10)
+                      { ?>
                       <li <?php if($pagina_atual=="index.php") echo 'class="active"'; ?>><a href="./">Home</a></li>
                       <li <?php if($pagina_atual=="cursos.php") echo 'class="active"'; ?>><a href="cursos.php">Cursos</a></li>
                       <li <?php if($pagina_atual=="materias.php") echo 'class="active"'; ?>><a href="materias.php">Matérias</a></li>
                       <li <?php if($pagina_atual=="professores.php") echo 'class="active"'; ?>><a href="professores.php">Professores</a></li>
-                      <li <?php if($pagina_atual=="alunos.php") echo 'class="active"'; ?>><a href="alunos.php">Alunos</a></li>
-                      
-                  </ul>
+                      <li <?php if($pagina_atual=="alunos.php") echo 'class="active"'; ?>><a href="alunos.php">Alunos</a></li> 
+                      <li <?php if($pagina_atual=="salas.php") echo 'class="active"'; ?>><a href="salas.php">Salas</a></li>
+                      <li <?php if($pagina_atual=="sensores.php") echo 'class="active"'; ?>><a href="sensores.php">Sensores</a></li>
+                    <?php
+                      } ?>
+                      <?php
+                      //Apenas monitoramento
+                      if($_SESSION['permissao'] >= 5){ ?>
+                          <li <?php if($pagina_atual=="monitoramento.php") echo 'class="active"'; ?>><a href="monitoramento.php">Monitoramento</a></li>
+                          <?php
+                      } 
 
+                      if($_SESSION['permissao'] != 5){ ?>
+                        <li <?php if($pagina_atual=="turmas.php" || $pagina_atual=="turma.php") echo 'class="active"'; ?>><a href="turmas.php">Turmas</a></li>
+                        <?php 
+                      } ?>
+                  </ul>
+                  
                   <ul class="nav pull-right">
                       <li><a href="?logout">Sair</a></li>
                   </ul>
@@ -64,8 +100,14 @@
 
         <!--<input class="btn btn-small" value="Voltar" onClick="JavaScript: window.history.back();" />-->
       <br clear="all" />
-    
-   <?php 
+
+      <?php 
+      if($_SESSION['welcome'] == 0){?>
+        <h4><?php echo $_SESSION['nome']; ?>, bem-vindo ao Fast Control!</h4>
+        <?php
+        $_SESSION['welcome'] = 1;
+      }
+
   } else{ ?>
       
            <style type="text/css">

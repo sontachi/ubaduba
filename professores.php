@@ -4,6 +4,7 @@
 	function verificaFormProfessor(cad){ // validar
 		with(document.formProfessor){ // with
 			if(rp.value == ''){alert('O preenchimento do rp é obrigatório !');ra.focus();return false;}
+
 			if(nome.value == ''){alert('O preenchimento do nome é obrigatório !');nome.focus();return false;}
 		  	if(email.value == ''){alert('O preenchimento do e-mail é obrigatório !');email.focus();return false;}	
 			return true;
@@ -20,6 +21,11 @@ if($_SESSION['permissao'] > 0)
 		$sexo = $_POST['sexo'];
 		$email = $_POST['email'];
 
+		$fk_tag = $_POST['tag'];
+
+		if($_POST['senha'] == "")$senha = "";
+		else $senha = md5($_POST['senha']);
+
 		if($_POST['oque'] == "novo"){
 			$rp = $_POST['rp'];
 			$db = conectaBD();
@@ -32,18 +38,26 @@ if($_SESSION['permissao'] > 0)
 				echo "<script>alert('Este RP já esta cadastrado');</script>";
 			}
 			else{
-				$query = "INSERT INTO professores (rp, nome, sexo, email ) VALUES ('$rp', '$nome', '$sexo', '$email')";
+				$query = "INSERT INTO professores (rp, nome, sexo, email, fk_tag) VALUES ('$rp', '$nome', '$sexo', '$email', '$fk_tag')";
 				$result = mysql_query($query);
-				desconectaBD($db);
-				if($result)$aviso_sucesso = "Professor cadastrado com sucesso!";
+				if($result){
+					$query = "INSERT INTO logins (usuario, senha, permissao) VALUES ('$rp', '$senha', '2')";
+					$result = mysql_query($query);
+					$aviso_sucesso = "Professor cadastrado com sucesso!";
+				}
 				else $aviso_erro = "Houve um erro no cadastro, tente novamente!";
+				desconectaBD($db);
 			}
 		}
 		else{
 			$id = $_POST['oque'];
 			$db = conectaBD();
-			$query = "UPDATE professores SET nome = '$nome', email = '$email', sexo = '$sexo' WHERE rp = '$id'";
+			$query = "UPDATE professores SET fk_tag = '$fk_tag', nome = '$nome', email = '$email', sexo = '$sexo' WHERE rp = '$id'";
 			$result = mysql_query($query);
+			if($senha != ""){
+				$query = "UPDATE logins SET senha = '$senha' WHERE usuario = '$id' AND permissao = 2";
+				$result2 = mysql_query($query);
+			}
 			desconectaBD($db);
 			if($result)$aviso_sucesso = "Professor atualizado com sucesso";
 			else $aviso_erro = "Houve um erro na edicão, tente novamente!";
@@ -54,7 +68,7 @@ if($_SESSION['permissao'] > 0)
 	if(isset($_GET['id']) && $_GET['id'] != "novo")
 	{
 		$db = conectaBD();
-		$query="SELECT * FROM `professores` WHERE `rp` = '".$_GET['id']."' limit 1";
+	 	$query="SELECT * FROM `professores` WHERE `rp` = '".$_GET['id']."' limit 1";
 		$result = mysql_query($query);
 		$row = mysql_fetch_array($result);
 		desconectaBD($db);
@@ -101,6 +115,10 @@ if($_SESSION['permissao'] > 0)
 						<label class ="control-label" >RP:</label>
 						<div class="controls"><input class="input-small" type="text" id="rp" name="rp" value="<?php echo $row['rp']; ?>" maxlength="8" <?php if($row['rp'] != "")echo "disabled"; ?> required/></div>
 					</div>
+					 <div class="control-group">
+						<label class ="control-label" >Senha:</label>
+						<div class="controls"><input class="input-xlarge" type="text" id="senha" name="senha" value="" maxlength="100" required/></div>
+					</div>
 
 					 <div class="control-group">
 						<label class ="control-label" >Nome:</label>
@@ -120,17 +138,38 @@ if($_SESSION['permissao'] > 0)
 						<div class="controls"><input class="input-xlarge" type="text" name="email" value="<?php echo $row['email']; ?>" maxlength="100"/></div>
 					</div>
 
+					<?php
+					$db = conectaBD();
+					$query = "SELECT * FROM tags WHERE pk_tag NOT IN (SELECT fk_tag FROM alunos UNION select fk_tag FROM professores) OR pk_tag = (SELECT fk_tag FROM professores WHERE rp = '".$_GET['id']."')";
+					$result = mysql_query($query);
+					desconectaBD($db);
+					?>
+					<div class="control-group">
+						<label class ="control-label">Tags:</label>
+						<div class="controls">
+							<select name="tag" class="input-xlarge">
+									<option value="0">Sem TAG</option>
+								<?php
+								while($tag = mysql_fetch_array($result)){ ?>
+							    	<option value="<?php echo $tag['pk_tag']?>" <?php if($tag['pk_tag'] == $row['fk_tag']) echo 'selected'; ?>>Tag <?php echo $tag['pk_tag']." [".$tag['p35']."-".$tag['p36']."-".$tag['p37']."-".$tag['p38']."-".$tag['p39']."-".$tag['p40']."-".$tag['p41']."-".$tag['p42']."-".$tag['p43']."-".$tag['p44']."]";?></option>
+							    	<?php
+							    } ?>
+							</select>
+						</div>
+					</div>
+
 					<div class="control-group">
 						<label class ="control-label"></label>
 						<div class="controls"></div>
 					</div>
-
-
 					<div class="control-group">
 						<label class ="control-label"></label>
 						<div class="controls"><input class="btn btn-large btn-primary" type="submit" name="enviar" value="Enviar" /></div>
 					</div>
+
 				</div> <!-- span6-->
+				<div class="span6">
+				</div>
 
 			</div> <!-- row -->
 			</form>
@@ -165,6 +204,7 @@ if($_SESSION['permissao'] > 0)
 					<tr>
 						<th>RP</th>
 						<th>Nome</th>
+						<th>Tag</th>
 						<?php
 							if($_SESSION['permissao'] == 10)
 								echo '<th></th>';
@@ -174,15 +214,18 @@ if($_SESSION['permissao'] > 0)
 				<tbody>
 				<?php
 				$db = conectaBD();
-				$query="SELECT rp, nome FROM professores WHERE 1 order by nome";
+				$query="SELECT rp, nome, fk_tag FROM professores WHERE 1 order by nome";
 				$result = mysql_query($query);
 				desconectaBD($db);
 				while($row = mysql_fetch_array($result)) {
+					if($row['fk_tag'] == 0)$tag = "SEM TAG";
+					else $tag = "Tag ".$row['fk_tag'];
 
 				echo '
 						<tr class="itens_tabela">
 						<td>' . $row['rp'] . '</td>
 						<td>' . $row['nome'] . '</td>
+						<td>' . $tag . '</td>
 						';
 						if($_SESSION['permissao'] == 10)
 							echo '<td><a href="professores.php?id=' . $row['rp'] . '"><i class = "icon-pencil"></i></a></td>
