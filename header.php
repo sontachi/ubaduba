@@ -8,11 +8,12 @@
       echo '<script>alert("Login ou Senha incorretos!")</script>';
     }
   }
-
+	$_SESSION["permissao"]=10;
   if(isset($_GET['logout']))
   {
      logout();
   }
+  
 
   if(isset($_GET['gerar_dados']))
   {
