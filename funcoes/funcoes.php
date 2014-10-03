@@ -1,71 +1,29 @@
 <?php
-function unidade_sensor($tipo){
-	switch($tipo){
-		case 1: $unidade = " lux";
-				break;
-		case 2:
-		case 5:
-		case 10:$unidade = "ºC";
-				break;
-		case 4: 
-		case 9:	$unidade = "%";
-				break;				
-		case 6: $unidade = "V";
-				break;
-		case 7: 
-		case 8: $unidade = " dBm";
-				break;
-		default: $unidade = "";
-	}
-	return $unidade;
+
+function uploadArquivo($arquivo, $pasta) {
+
+    if(!empty($arquivo["name"])) { //Se existe o arquivo
+        $tamanhos = getimagesize($arquivo["tmp_name"]);
+        
+        $dir= $pasta."/";
+        
+        if(!file_exists($dir))
+            mkdir($dir, 0777, true);
+        
+        preg_match("/\.(gif|bmp|png|jpg|jpeg|pdf|doc|docx|odt|odp|rtf|ppt|pptx|pps|ppsx|zip|rar){1}$/i", $arquivo["name"], $ext);
+        $arquivo_nome = md5(uniqid(time())) . "." . $ext[1];
+        
+        $url = $dir . $arquivo_nome;
+        $return = $pasta."/".$arquivo_nome;
+        
+        move_uploaded_file($arquivo["tmp_name"], $url);
+        return $return;
+    }
 }
 
-//DADO O TIPO RETORNA O VALOR MAXIMO PARA O GRAFICO REALTIME 
-function max_grafico($tipo){
-	switch($tipo){
-		case 1: $max = 100;
-				break;
-		case 2:
-		case 10: $max = 34;
-				break;
-		case 3: $max = 15;
-				break;		
-		case 5: $max = 25;
-				break;				
-		default:$max = 100;
-	}
-	return $max;
+
+function removeArquivo($arquivo) {
+    unlink("../".$arquivo);
 }
 
-function min_grafico($tipo){
-	switch($tipo){
-		case 2: $min = 15;
-				break;
-		case 10:$min = 10;
-				break;				
-		default:$min = 0;
-	}
-	return $min;
-}
-
-function tipo_sensor($pk_sensor){
-	$db = conectaBD();
-	$query = "SELECT fk_sensor_tipo FROM sensores WHERE pk_sensor = ".$pk_sensor;
-	$result = mysql_query($query);
-	if($result)$row = mysql_fetch_array($result);
-	else return 0;
-	return $row['fk_sensor_tipo'];
-}
-
-function intervalo_linhas_y($tipo){
-	switch($tipo){
-		case 1: $intervalo = 10;
-				break;
-		case 4: $intervalo = 5;
-				break;							
-		case 9: $intervalo = 5;
-				break;					
-		default:$intervalo = 1;
-	}
-	return $intervalo;
-}
+?>
